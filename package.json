@@ -2,15 +2,20 @@
   "name": "ecommerce-api",
   "version": "1.0.0",
   "description": "RESTful e-commerce API with JWT authentication, product and inventory management, shopping carts, order processing, and Stripe payment integration. Built with TypeScript and designed with a scalable architecture for secure and reliable commerce operations.",
-  "main": "index.js",
+  "main": "server.ts",
   "scripts": {
-    "dev": "node src/index.js"
+    "dev": "tsx --watch src/server.ts"
   },
   "keywords": [],
   "author": "Tommy Contreras",
   "license": "ISC",
   "type": "module",
   "dependencies": {
-    "express": "^5.2.1"
+    "express": "^5.2.1",
+    "tsx": "^4.23.15"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.6",
+    "typescript": "^7.0.2"
   }
 }
