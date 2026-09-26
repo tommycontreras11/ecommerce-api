@@ -4,7 +4,11 @@
   "description": "RESTful e-commerce API with JWT authentication, product and inventory management, shopping carts, order processing, and Stripe payment integration. Built with TypeScript and designed with a scalable architecture for secure and reliable commerce operations.",
   "main": "server.ts",
   "scripts": {
-    "dev": "tsx watch src/server.ts"
+    "dev": "tsx watch src/server.ts",
+    "typeorm": "tsx ./node_modules/typeorm/cli.js -d ./src/database/data-source.ts",
+    "migration:generate": "npm run typeorm -- migration:generate",
+    "migration:run": "npm run typeorm -- migration:run",
+    "migration:revert": "npm run typeorm -- migration:revert"
   },
   "keywords": [],
   "author": "Tommy Contreras",

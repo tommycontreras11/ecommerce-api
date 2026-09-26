@@ -1,10 +1,10 @@
 import { DataSource } from "typeorm";
 import { config } from "../config/index.js";
-import { fileURLToPath } from "url"
+import { fileURLToPath } from "url";
 import path from "path";
 
-const __filename = fileURLToPath(import.meta.url)
-const __direname = path.dirname(__filename)
+const __filename = fileURLToPath(import.meta.url);
+const __direname = path.dirname(__filename);
 
 const AppDataSource: DataSource = new DataSource({
   type: "postgres",
@@ -17,7 +17,7 @@ const AppDataSource: DataSource = new DataSource({
   logging: config.APP_ENV === "dev" ? ["query", "error"] : undefined,
 
   entities: [path.join(__direname, "entities/*.entity.{ts, js}")],
-  migrations: [path.join(__direname, "migrations/*.{ts, js}")]
+  migrations: [path.join(__direname, "migrations/*.{ts, js}")],
 });
 
 export default AppDataSource;

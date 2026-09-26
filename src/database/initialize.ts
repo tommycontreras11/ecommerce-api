@@ -8,6 +8,6 @@ export const connectDatabase = async () => {
     console.error(
       `❌ Something went wrong while trying to establish a connection: ${error}`,
     );
-    process.exit(1)
+    process.exit(1);
   }
 };
