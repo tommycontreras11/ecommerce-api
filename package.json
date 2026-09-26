@@ -4,7 +4,7 @@
   "description": "RESTful e-commerce API with JWT authentication, product and inventory management, shopping carts, order processing, and Stripe payment integration. Built with TypeScript and designed with a scalable architecture for secure and reliable commerce operations.",
   "main": "server.ts",
   "scripts": {
-    "dev": "tsx --watch src/server.ts"
+    "dev": "tsx watch src/server.ts"
   },
   "keywords": [],
   "author": "Tommy Contreras",
