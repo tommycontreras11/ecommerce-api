@@ -1,3 +1,4 @@
+import "reflect-metadata"
 import express from "express"
 import { errorHandlerMiddleware } from "./middlewares/error-handler.middleware.js"
 import routes from "./routes/index.js"
