@@ -6,7 +6,7 @@ import routes from "./routes/index.js"
 const app = express()
 
 app.use(express.json())
-app.use(errorHandlerMiddleware)
 app.use(routes)
+app.use(errorHandlerMiddleware)
 
 export default app
