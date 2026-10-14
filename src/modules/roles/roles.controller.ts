@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { roleService } from "./role.service.js";
+import { roleService } from "./roles.service.js";
 import { StatusCode } from "../../common/constants/status-code.enum.js";
 
 export const getAllRoleController = async (_req: Request, res: Response) => {

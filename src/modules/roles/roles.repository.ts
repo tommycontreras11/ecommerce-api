@@ -1,6 +1,6 @@
-import AppDataSource from "../../database/data-source.js";
+import AppDataSource from "../../config/database.js";
 import { RoleEntity } from "../../database/entities/roles.entity.js";
-import { ICreateRole, IUpdateRole } from "./interfaces/role.interface.js";
+import { ICreateRole, IUpdateRole } from "./roles.types.js";
 
 const entity = AppDataSource.getRepository(RoleEntity);
 

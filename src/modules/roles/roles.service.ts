@@ -5,8 +5,8 @@ import {
   ICreateRole,
   IRole,
   IUpdateRole,
-} from "./interfaces/role.interface.js";
-import { roleRepository } from "./role.repository.js";
+} from "./roles.types.js";
+import { roleRepository } from "./roles.repository.js";
 
 const validateExistingRoleByName = async (
   name: string,

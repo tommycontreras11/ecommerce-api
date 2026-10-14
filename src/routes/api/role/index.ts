@@ -5,12 +5,12 @@ import {
   getAllRoleController,
   getByUuidRoleController,
   updateRoleController,
-} from "../../../modules/role/role.controller.js";
+} from "../../../modules/roles/roles.controller.js";
 import { schemaValidator } from "../../../middlewares/schema-validator.middleware.js";
 import {
   createRoleSchema,
   updateRoleSchema,
-} from "../../../dtos/role/role.dto.js";
+} from "../../../modules/roles/roles.validation.js";
 
 const router = Router();
 
