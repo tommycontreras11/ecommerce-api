@@ -1,4 +1,4 @@
-import { ICreateRole } from "../../../modules/role/interfaces/role.interface.js";
+import { ICreateRole } from "../../../modules/roles/roles.types.js";
 
 export const rolesData: ICreateRole[] = [
     {

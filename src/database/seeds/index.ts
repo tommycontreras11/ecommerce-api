@@ -1,5 +1,5 @@
-import AppDataSource from "../data-source.js"
-import { roleSeeder } from "./01-roles.seeder.js"
+import AppDataSource from "../../config/database.js"
+import { roleSeeder } from "./role.seed.js"
 
 export const seed = async () => {
     await AppDataSource.initialize()
