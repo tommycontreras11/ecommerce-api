@@ -1,12 +1,9 @@
 import { ConflictException } from "../../exceptions/conflict.exception.js";
 import { NotFoundException } from "../../exceptions/not-found.exception.js";
 import { roleFormatted, rolesFormatted } from "../../mappers/role.mapper.js";
-import {
-  ICreateRole,
-  IRole,
-  IUpdateRole,
-} from "./roles.types.js";
 import { roleRepository } from "./roles.repository.js";
+import { IRole } from "./roles.types.js";
+import { CreateRole, UpdateRole } from "./roles.validation.js";
 
 const validateExistingRoleByName = async (
   name: string,
@@ -29,17 +26,14 @@ export const roleService = {
 
     return roleFormatted(role);
   },
-  async create({ name, ...payload }: ICreateRole): Promise<IRole> {
+  async create({ name, ...payload }: CreateRole): Promise<IRole> {
     const role = await roleRepository.findOneByName(name);
 
     if (role) throw new ConflictException("Please, select other name");
 
     return roleFormatted(await roleRepository.save({ name, ...payload }));
   },
-  async update(
-    uuid: string,
-    { name, ...payload }: IUpdateRole,
-  ): Promise<IRole> {
+  async update(uuid: string, { name, ...payload }: UpdateRole): Promise<IRole> {
     const role = await roleRepository.findOneByUuid(uuid);
 
     if (!role) throw new NotFoundException("Role not found");

@@ -1,6 +1,6 @@
 import AppDataSource from "../../config/database.js";
 import { RoleEntity } from "../../database/entities/roles.entity.js";
-import { ICreateRole, IUpdateRole } from "./roles.types.js";
+import { CreateRole, UpdateRole } from "./roles.validation.js";
 
 const entity = AppDataSource.getRepository(RoleEntity);
 
@@ -14,14 +14,14 @@ export const roleRepository = {
   findOneByName(name: string) {
     return entity.findOneBy({ name });
   },
-  save(payload: ICreateRole): Promise<RoleEntity> {
+  save(payload: CreateRole): Promise<RoleEntity> {
     const role = entity.create({
       name: payload.name,
       ...(payload.description && { description: payload.description }),
     });
     return role.save();
   },
-  modify(role: RoleEntity, payload: IUpdateRole): Promise<RoleEntity> {
+  modify(role: RoleEntity, payload: UpdateRole): Promise<RoleEntity> {
     payload.name && (role.name = payload.name);
     payload.description && (role.description = payload.description);
     payload.is_active && (role.is_active = payload.is_active);
