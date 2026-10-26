@@ -6,8 +6,6 @@ import path from "path";
 const __filename = fileURLToPath(import.meta.url);
 const __direname = path.dirname(__filename);
 
-console.log("__direname: ", path.join(__direname, "../database/entities/*.entity.{ts, js}"))
-
 const AppDataSource: DataSource = new DataSource({
   type: "postgres",
   host: env.DB_HOST,
