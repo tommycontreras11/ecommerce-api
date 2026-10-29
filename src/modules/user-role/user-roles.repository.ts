@@ -1,4 +1,4 @@
-import { DeleteResult } from "typeorm";
+import { DeleteResult, EntityManager } from "typeorm";
 import AppDataSource from "../../config/database.js";
 import { RoleEntity } from "../../database/entities/roles.entity.js";
 import { UserRoleEntity } from "../../database/entities/user-role.entity.js";
@@ -9,22 +9,22 @@ const entity = AppDataSource.getRepository(UserRoleEntity);
 
 export const userRolesRepository = {
   findAll(filter?: UserRoleIdentifier): Promise<UserRoleEntity[]> {
-    let query = { user: { }, role: { } }
+    let query = { user: {}, role: {} };
 
-    if(filter?.user_uuid) {
-      query.user = { uuid: filter.user_uuid } 
+    if (filter?.user_uuid) {
+      query.user = { uuid: filter.user_uuid };
     }
 
-    if(filter?.role_uuid) {
-      query.role = { uuid: filter.role_uuid } 
+    if (filter?.role_uuid) {
+      query.role = { uuid: filter.role_uuid };
     }
-    
+
     return entity.find({
-      relations: { 
+      relations: {
         user: true,
-        role: true
+        role: true,
       },
-      ...(filter && { where: { ...query } })
+      ...(filter && { where: { ...query } }),
     });
   },
   findByUserUuidAndRoleUuid(
@@ -38,14 +38,16 @@ export const userRolesRepository = {
       relations: { user: true, role: true },
     });
   },
-  save(user: UserEntity, role: RoleEntity): Promise<UserRoleEntity> {
-    const userRole = entity.create({ user, role })
-    return entity.save(userRole);
+  save(
+    payload: Partial<UserRoleEntity>,
+    manager: EntityManager = AppDataSource.manager,
+  ): Promise<UserRoleEntity> {
+    return manager.save(UserRoleEntity, payload);
   },
   remove(user: UserEntity, role: RoleEntity): Promise<DeleteResult> {
     return entity.delete({
       user_id: user.id,
-      role_id: role.id
+      role_id: role.id,
     });
   },
 };

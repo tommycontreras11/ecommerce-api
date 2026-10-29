@@ -32,16 +32,6 @@ export const userRolesService = {
 
     return userRolesFormatted(userRoles);
   },
-  async create(payload: AssignUserRole): Promise<IUserRole> {
-    const { user, role } = await validateExistingUserAndRole(payload);
-
-    const existing =
-      await userRolesRepository.findByUserUuidAndRoleUuid(payload);
-
-    if (existing) throw new ConflictException("Role already assigned to user");
-
-    return userRoleFormatted(await userRolesRepository.save(user, role));
-  },
   async delete(payload: UserRoleIdentifier): Promise<{ message: string }> {
     const userRole =
       await userRolesRepository.findByUserUuidAndRoleUuid(payload);
