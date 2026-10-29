@@ -1,3 +1,4 @@
+import { EntityManager } from "typeorm";
 import AppDataSource from "../../config/database.js";
 import { UserEntity } from "../../database/entities/user.entity.js";
 import { CreateUser, UpdateUser } from "./users.validation.js";
@@ -14,15 +15,8 @@ export const userRepository = {
   findOneByEmail(email: string): Promise<UserEntity | null> {
     return entity.findOneBy({ email });
   },
-  save(payload: CreateUser): Promise<UserEntity> {
-    const user = entity.create({
-      first_name: payload.first_name,
-      last_name: payload.last_name,
-      email: payload.email,
-      password_hash: payload.password,
-    });
-
-    return user.save();
+  save(payload: CreateUser, transactionalManager: EntityManager): Promise<UserEntity> {
+    return transactionalManager.save(UserEntity, { ...payload, password_hash: payload.password });
   },
   modify(user: UserEntity, payload: UpdateUser): Promise<UserEntity> {
     payload.first_name && (user.first_name = payload.first_name);

@@ -1,7 +1,11 @@
 import { hashPassword } from "../../common/utils/password.util.js";
+import AppDataSource from "../../config/database.js";
+import { UserEntity } from "../../database/entities/user.entity.js";
 import { ConflictException } from "../../exceptions/conflict.exception.js";
 import { NotFoundException } from "../../exceptions/not-found.exception.js";
 import { userFormatted, usersFormatted } from "../../mappers/user.mapper.js";
+import { roleRepository } from "../roles/roles.repository.js";
+import { userRolesRepository } from "../user-role/user-roles.repository.js";
 import { userRepository } from "./users.repository.js";
 import { IUser } from "./users.types.js";
 import { CreateUser, UpdateUser } from "./users.validation.js";
@@ -23,12 +27,34 @@ export const userService = {
     if (foundUserByEmail)
       throw new ConflictException("Please, select other email");
 
-    const userCreated = await userRepository.save({
-      ...payload,
-      password: await hashPassword(payload.password),
-    });
+    const foundRole = await roleRepository.findOneByUuid(payload.role_uuid);
+    if (!foundRole) throw new NotFoundException("Role not found");
 
-    return userFormatted(userCreated);
+    const hashedPassword = await hashPassword(payload.password);
+
+    const user = await AppDataSource.manager.transaction(
+      async (transactionalManager) => {
+        const user = await userRepository.save(
+          {
+            ...payload,
+            password: hashedPassword,
+          },
+          transactionalManager,
+        );
+
+        await userRolesRepository.save(
+          {
+            user,
+            role: foundRole,
+          },
+          transactionalManager,
+        );
+
+        return user;
+      },
+    );
+
+    return userFormatted(user);
   },
   async update(uuid: string, payload: UpdateUser) {
     const user = await userRepository.findOneByUuid(uuid);
