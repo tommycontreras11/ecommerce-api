@@ -3,8 +3,8 @@ import z from "zod";
 import { StatusCode } from "../common/constants/status-code.enum.js";
 
 export const schemaValidator =
-  (schema: z.ZodType) => (req: Request, res: Response, next: NextFunction) => {
-    const result = schema.safeParse(req.body);
+  (schema: z.ZodType, type: "body" | "query" | "params" = "body") => (req: Request, res: Response, next: NextFunction) => {
+    const result = schema.safeParse(req[type]);
 
     const errors = result.error?.flatten();
 
@@ -17,6 +17,6 @@ export const schemaValidator =
         },
       });
 
-    req.body = result.data;
+    req[type] = result.data;
     next();
   };
