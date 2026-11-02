@@ -16,9 +16,6 @@ export const createPermissionSchema = z
       .trim()
       .max(100, { error: "Max length is 100" }),
   })
-  .refine((data) => Object.keys(data).length > 0, {
-    message: "At least one field must be provided",
-  });
 
 export const updatePermissionSchema = z
   .object({
