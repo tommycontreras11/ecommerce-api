@@ -27,7 +27,7 @@ export const userRolesRepository = {
       ...(filter && { where: { ...query } }),
     });
   },
-  findByUserUuidAndRoleUuid(
+  findOneByUserUuidAndRoleUuid(
     payload: UserRoleIdentifier,
   ): Promise<UserRoleEntity | null> {
     return entity.findOne({

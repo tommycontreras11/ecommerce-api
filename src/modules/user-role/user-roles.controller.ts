@@ -14,6 +14,12 @@ export const getAllUserRoleController = async (req: Request, res: Response) => {
   return res.status(StatusCode.OK).json({ data: userRoles });
 };
 
+export const createUserRoleController = async (req: Request, res: Response) => {
+  const userRole = await userRolesService.create(req.body);
+
+  return res.status(StatusCode.OK).json({ data: userRole });
+};
+
 export const deleteUserRoleController = async (req: Request, res: Response) => {
   const { user_uuid, role_uuid } = req.query as {
     user_uuid: string;
