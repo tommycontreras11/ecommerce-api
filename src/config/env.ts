@@ -14,7 +14,11 @@ const envSchema = z.object({
   DB_PORT: z.coerce.number().int().positive().default(5432),
   DB_NAME: z.string().min(1),
   DB_USER: z.string().min(1),
-  DB_PASSWORD: z.string()
+  DB_PASSWORD: z.string(),
+
+  //JWT Config
+  JWT_ACCESS_TOKEN: z.string().min(1),
+  JWT_EXPIRATION_TOKEN: z.string().default("24h")
 })
 
 export const env = envSchema.parse(process.env)
