@@ -17,7 +17,7 @@ export const createUserSchema = z.object({
     .string({ error: "Password is required" })
     .trim()
     .max(255, { error: "Max length is 255" }),
-  role_uuid: z.uuid({ version: "v4", error: "Role uuid is required" }).trim(),
+  role_uuid: z.uuid({ version: "v4", error: "Role uuid is required" }).trim().optional(),
 });
 
 export const updateUserSchema = z

@@ -1,6 +1,6 @@
 import { hashPassword } from "../../common/utils/password.util.js";
 import AppDataSource from "../../config/database.js";
-import { UserEntity } from "../../database/entities/user.entity.js";
+import { RoleEntity } from "../../database/entities/roles.entity.js";
 import { ConflictException } from "../../exceptions/conflict.exception.js";
 import { NotFoundException } from "../../exceptions/not-found.exception.js";
 import { userFormatted, usersFormatted } from "../../mappers/user.mapper.js";
@@ -27,7 +27,13 @@ export const userService = {
     if (foundUserByEmail)
       throw new ConflictException("Please, select other email");
 
-    const foundRole = await roleRepository.findOneByUuid(payload.role_uuid);
+    let foundRole: RoleEntity | null = null;
+    if (payload?.role_uuid) {
+      foundRole = await roleRepository.findOneByUuid(payload.role_uuid);
+    } else {
+      foundRole = await roleRepository.findOneByName("user");
+    }
+
     if (!foundRole) throw new NotFoundException("Role not found");
 
     const hashedPassword = await hashPassword(payload.password);
