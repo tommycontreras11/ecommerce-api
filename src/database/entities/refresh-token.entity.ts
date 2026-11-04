@@ -7,6 +7,7 @@ import {
   Index,
   JoinColumn,
   ManyToOne,
+  OneToMany,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from "typeorm";
@@ -34,6 +35,30 @@ export class RefreshTokenEntity extends BaseEntity {
     nullable: true,
   })
   expires_at: Date;
+
+  @Column({
+    type: "timestamptz",
+    nullable: true,
+  })
+  revoked_at?: Date;
+
+  @Index()
+  @Column({ type: "int", nullable: true })
+  replaced_by_token_id: number | null;
+
+  @ManyToOne(
+    () => RefreshTokenEntity,
+    (refreshToken) => refreshToken.previous_tokens,
+    { nullable: true, onDelete: "SET NULL" },
+  )
+  @JoinColumn({ name: "replaced_by_token_id" })
+  replaced_by: RefreshTokenEntity | null;
+
+  @OneToMany(
+    () => RefreshTokenEntity,
+    (refreshToken) => refreshToken.replaced_by,
+  )
+  previous_tokens: RefreshTokenEntity[];
 
   @CreateDateColumn({
     type: "timestamptz",
