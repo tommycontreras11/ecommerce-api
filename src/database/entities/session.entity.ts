@@ -1,4 +1,5 @@
 import {
+  BaseEntity,
   Column,
   CreateDateColumn,
   Entity,
@@ -6,13 +7,15 @@ import {
   Index,
   JoinColumn,
   ManyToOne,
+  OneToMany,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from "typeorm";
 import { UserEntity } from "./user.entity.js";
+import { RefreshTokenEntity } from "./refresh-token.entity.js";
 
 @Entity({ name: "sessions" })
-export class SessionEntity {
+export class SessionEntity extends BaseEntity {
   @PrimaryGeneratedColumn({ type: "int" })
   id: number;
 
@@ -25,23 +28,14 @@ export class SessionEntity {
   @Column({ type: "int" })
   user_id: number;
 
-  @Column({ type: "varchar", length: 255, unique: true })
-  token_hash: string;
+  @Column({ type: "varchar", length: 100, nullable: true })
+  device_name?: string;
 
-  @Index()
-  @Column({ type: "uuid" })
-  token_family_uuid: string;
-
-  @Column({ type: "inet", nullable: true })
+  @Column({ type: "varchar", length: 45, nullable: true })
   ip_address?: string;
 
   @Column({ type: "text", nullable: true })
   user_agent?: string;
-
-  @Column({
-    type: "timestamptz",
-  })
-  expires_at: Date;
 
   @Column({
     type: "timestamptz",
@@ -64,4 +58,7 @@ export class SessionEntity {
   })
   @JoinColumn({ name: "user_id", referencedColumnName: "id" })
   user: UserEntity;
+
+  @OneToMany(() => RefreshTokenEntity, (refreshToken) => refreshToken.session)
+  refreshTokens: RefreshTokenEntity[];
 }
