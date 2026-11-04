@@ -10,13 +10,32 @@ export const userRepository = {
     return entity.find();
   },
   findOneByUuid(uuid: string): Promise<UserEntity | null> {
-    return entity.findOneBy({ uuid });
+    return entity.findOne({
+      relations: {
+        user_roles: {
+          role: {
+            role_permissions: {
+              permission: true,
+            },
+          },
+        },
+      },
+      where: {
+        uuid,
+      },
+    });
   },
   findOneByEmail(email: string): Promise<UserEntity | null> {
     return entity.findOneBy({ email });
   },
-  save(payload: CreateUser, transactionalManager: EntityManager): Promise<UserEntity> {
-    return transactionalManager.save(UserEntity, { ...payload, password_hash: payload.password });
+  save(
+    payload: CreateUser,
+    transactionalManager: EntityManager,
+  ): Promise<UserEntity> {
+    return transactionalManager.save(UserEntity, {
+      ...payload,
+      password_hash: payload.password,
+    });
   },
   modify(user: UserEntity, payload: UpdateUser): Promise<UserEntity> {
     payload.first_name && (user.first_name = payload.first_name);
