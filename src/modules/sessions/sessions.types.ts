@@ -1,16 +1,10 @@
 import { UserEntity } from "../../database/entities/user.entity.js";
 
 export interface ICreateSession {
-  user: UserEntity;
-  token_hash: string; // Refresh token
+  device_name?: string;
   ip_address?: string;
   user_agent?: string;
-}
-
-export interface IUpdateSession {
-  token_hash?: string; // Refresh token
-  token_family_uuid: string;
-  revoked_at?: Date;
+  user: UserEntity;
 }
 
 export interface ISession {

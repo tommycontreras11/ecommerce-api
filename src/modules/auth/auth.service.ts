@@ -3,17 +3,19 @@ import {
   generateRefreshAccessToken,
 } from "../../common/utils/jwt.util.js";
 import { comparePassword } from "../../common/utils/password.util.js";
+import AppDataSource from "../../config/database.js";
 import { env } from "../../config/env.js";
 import { NotFoundException } from "../../exceptions/not-found.exception.js";
 import { UnauthorizedException } from "../../exceptions/unauthorized.exception.js";
 import { meFormatted } from "../../mappers/auth.mapper.js";
+import { refreshTokenService } from "../refresh-tokens/refresh-tokens.service.js";
 import { sessionService } from "../sessions/sessions.service.js";
 import { userRepository } from "../users/users.repository.js";
 import { IMe } from "./auth.types.js";
 import { SignIn } from "./auth.validation.js";
 
 export const authService = {
-  async signIn(payload: SignIn) {
+  async signIn(payload: SignIn & { ipAddress: string; userAgent: string }) {
     const foundUserByEmail = await userRepository.findOneByEmail(payload.email);
 
     if (!foundUserByEmail)
@@ -27,20 +29,41 @@ export const authService = {
     if (!comparePasswords)
       throw new UnauthorizedException("User y/o password incorrect");
 
-    const sub = foundUserByEmail.uuid;
-    const refreshToken = generateRefreshAccessToken({ sub });
+    const { accessToken, refreshToken } =
+      await AppDataSource.manager.transaction(async (transactionalManager) => {
+        const sub = foundUserByEmail.uuid;
+        const refreshTokenGenerated = generateRefreshAccessToken({ sub });
 
-    const refreshTokenExpiresAt = new Date();
+        const refreshTokenExpiresAt = new Date();
 
-    refreshTokenExpiresAt.setDate(7);
+        refreshTokenExpiresAt.setDate(7);
 
-    await sessionService.create({
-      user: foundUserByEmail,
-      token_hash: refreshToken
-    });
+        const session = await sessionService.create(
+          {
+            user: foundUserByEmail,
+            ip_address: payload.ipAddress,
+            user_agent: payload.userAgent,
+          },
+          transactionalManager,
+        );
+
+        await refreshTokenService.create(
+          {
+            session,
+            token_hash: refreshTokenGenerated,
+            expires_at: refreshTokenExpiresAt,
+          },
+          transactionalManager,
+        );
+
+        return {
+          accessToken: generateAccessToken({ sub }),
+          refreshToken: refreshTokenGenerated,
+        };
+      });
 
     return {
-      access_token: generateAccessToken({ sub }),
+      access_token: accessToken,
       refresh_token: refreshToken,
       token_type: "Bearer",
       expires_in: env.JWT_EXPIRATION_TOKEN,
