@@ -13,7 +13,7 @@ import {
 } from "typeorm";
 import { SessionEntity } from "./session.entity.js";
 
-@Entity({ name: "refresh-tokens" })
+@Entity({ name: "refresh_tokens" })
 export class RefreshTokenEntity extends BaseEntity {
   @PrimaryGeneratedColumn({ type: "int" })
   id: number;
