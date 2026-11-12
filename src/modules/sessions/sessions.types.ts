@@ -1,12 +1,3 @@
-import { UserEntity } from "../../database/entities/user.entity.js";
-
-export interface ICreateSession {
-  device_name?: string;
-  ip_address?: string;
-  user_agent?: string;
-  user: UserEntity;
-}
-
 export interface ISession {
   uuid: string;
   user: IUser;

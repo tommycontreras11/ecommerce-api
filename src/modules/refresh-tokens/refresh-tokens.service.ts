@@ -1,19 +1,11 @@
-import { EntityManager } from "typeorm";
-import AppDataSource from "../../config/database.js";
-import { RefreshTokenEntity } from "../../database/entities/refresh-token.entity.js";
-import { refreshTokenRepository } from "./refresh-tokens.repository.js";
-import { ICreateRefreshToken, IRefreshToken } from "./refresh-tokens.types.js";
-import { NotFoundException } from "../../exceptions/not-found.exception.js";
-import { ConflictException } from "../../exceptions/conflict.exception.js";
 import { generateRefreshAccessToken } from "../../common/utils/jwt.util.js";
+import AppDataSource from "../../config/database.js";
+import { ConflictException } from "../../exceptions/conflict.exception.js";
+import { NotFoundException } from "../../exceptions/not-found.exception.js";
+import { refreshTokenRepository } from "./refresh-tokens.repository.js";
+import { IRefreshToken } from "./refresh-tokens.types.js";
 
 export const refreshTokenService = {
-  async create(
-    payload: ICreateRefreshToken,
-    transactionalManager: EntityManager = AppDataSource.manager,
-  ): Promise<RefreshTokenEntity> {
-    return await refreshTokenRepository.save(payload, transactionalManager);
-  },
   async refresh(payload: IRefreshToken) {
     const refreshToken = await refreshTokenRepository.findOneByToken(payload.token_hash)
 
