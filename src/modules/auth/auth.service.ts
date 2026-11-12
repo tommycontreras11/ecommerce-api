@@ -1,15 +1,11 @@
-import {
-  generateAccessToken,
-  generateRefreshAccessToken,
-} from "../../common/utils/jwt.util.js";
+import { generateAccessAndRefreshTokens, saveAccessAndRefreshTokens } from "../../common/utils/auth.util.js";
 import { comparePassword } from "../../common/utils/password.util.js";
 import AppDataSource from "../../config/database.js";
 import { env } from "../../config/env.js";
-import { RefreshTokenEntity } from "../../database/entities/refresh-token.entity.js";
-import { SessionEntity } from "../../database/entities/session.entity.js";
 import { NotFoundException } from "../../exceptions/not-found.exception.js";
 import { UnauthorizedException } from "../../exceptions/unauthorized.exception.js";
 import { meFormatted } from "../../mappers/auth.mapper.js";
+import { refreshTokenService } from "../refresh-tokens/refresh-tokens.service.js";
 import { userRepository } from "../users/users.repository.js";
 import { IMe } from "./auth.types.js";
 import { SignIn } from "./auth.validation.js";
@@ -30,31 +26,25 @@ export const authService = {
       throw new UnauthorizedException("User y/o password incorrect");
 
     const { accessToken, refreshToken } =
-      await AppDataSource.manager.transaction(async (transactionalManager) => {
-        const sub = foundUserByEmail.uuid;
-        const refreshTokenGenerated = generateRefreshAccessToken({ sub });
+      await generateAccessAndRefreshTokens(foundUserByEmail);
+    
+    await AppDataSource.manager.transaction(async (transactionalManager) => {
+      const refreshTokenExpiresAt = new Date();
 
-        const refreshTokenExpiresAt = new Date();
+      refreshTokenExpiresAt.setDate(7);
 
-        refreshTokenExpiresAt.setDate(7);
-        
-        const session = await transactionalManager.save(SessionEntity, {
-          user: foundUserByEmail,
-          ip_address: payload.ipAddress,
-          user_agent: payload.userAgent,
-        });
-
-        await transactionalManager.save(RefreshTokenEntity, {
-          session,
-          token_hash: refreshTokenGenerated,
-          expires_at: refreshTokenExpiresAt,
-        });
-
-        return {
-          accessToken: generateAccessToken({ sub }),
-          refreshToken: refreshTokenGenerated,
-        };
-      });
+      await saveAccessAndRefreshTokens(transactionalManager, {
+        user: foundUserByEmail,
+        token: {
+          ipAddress: payload.ipAddress,
+          userAgent: payload.userAgent
+        },
+        refreshToken: {
+          token: refreshToken,
+          expiresAt: refreshTokenExpiresAt
+        }
+      })
+    })
 
     return {
       access_token: accessToken,
@@ -62,6 +52,9 @@ export const authService = {
       token_type: "Bearer",
       expires_in: env.JWT_EXPIRATION_TOKEN,
     };
+  },
+  async refresh(token_hash: string) {
+    return await refreshTokenService.refresh(token_hash)
   },
   async me(user_uuid: string): Promise<IMe> {
     const user = await userRepository.findOneByUuid(user_uuid);

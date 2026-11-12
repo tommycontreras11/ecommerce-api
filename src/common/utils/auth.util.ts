@@ -5,32 +5,23 @@ import { RefreshTokenEntity } from "../../database/entities/refresh-token.entity
 import { UserEntity } from "../../database/entities/user.entity.js";
 import { generateAccessToken, generateRefreshAccessToken } from "./jwt.util.js";
 
-const generate = async (payload: IToken) => {
-  return await AppDataSource.manager.transaction(
-    async (transactionalManager) => {
-      const sub = payload.user.uuid;
-      const refreshTokenGenerated = generateRefreshAccessToken({ sub });
-
-      const refreshTokenExpiresAt = new Date();
-
-      refreshTokenExpiresAt.setDate(7);
-
-      return {
-        accessToken: generateAccessToken({ sub }),
-        refreshToken: refreshTokenGenerated,
-      };
-    },
-  );
+export const generateAccessAndRefreshTokens = async (user: UserEntity) => {
+  return {
+    accessToken: generateAccessToken({ sub: user.uuid }),
+    refreshToken: generateRefreshAccessToken({
+      sub: user.uuid,
+    }),
+  };
 };
 
-const saveAccessAndRefreshTokens = async (
+export const saveAccessAndRefreshTokens = async (
   transactionalManager: EntityManager = AppDataSource.manager,
   payload: IToken,
 ) => {
   const session = await transactionalManager.save(SessionEntity, {
     user: payload.user,
-    ip_address: payload.token.ipAddress,
-    user_agent: payload.token.userAgent,
+    ip_address: payload?.token?.ipAddress,
+    user_agent: payload?.token?.userAgent,
   });
 
   await transactionalManager.save(RefreshTokenEntity, {
@@ -42,7 +33,7 @@ const saveAccessAndRefreshTokens = async (
 
 interface IToken {
   user: UserEntity;
-  token: {
+  token?: {
     ipAddress?: string;
     userAgent?: string;
   };
