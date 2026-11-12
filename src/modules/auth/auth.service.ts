@@ -5,11 +5,11 @@ import {
 import { comparePassword } from "../../common/utils/password.util.js";
 import AppDataSource from "../../config/database.js";
 import { env } from "../../config/env.js";
+import { RefreshTokenEntity } from "../../database/entities/refresh-token.entity.js";
+import { SessionEntity } from "../../database/entities/session.entity.js";
 import { NotFoundException } from "../../exceptions/not-found.exception.js";
 import { UnauthorizedException } from "../../exceptions/unauthorized.exception.js";
 import { meFormatted } from "../../mappers/auth.mapper.js";
-import { refreshTokenService } from "../refresh-tokens/refresh-tokens.service.js";
-import { sessionService } from "../sessions/sessions.service.js";
 import { userRepository } from "../users/users.repository.js";
 import { IMe } from "./auth.types.js";
 import { SignIn } from "./auth.validation.js";
@@ -37,24 +37,18 @@ export const authService = {
         const refreshTokenExpiresAt = new Date();
 
         refreshTokenExpiresAt.setDate(7);
+        
+        const session = await transactionalManager.save(SessionEntity, {
+          user: foundUserByEmail,
+          ip_address: payload.ipAddress,
+          user_agent: payload.userAgent,
+        });
 
-        const session = await sessionService.create(
-          {
-            user: foundUserByEmail,
-            ip_address: payload.ipAddress,
-            user_agent: payload.userAgent,
-          },
-          transactionalManager,
-        );
-
-        await refreshTokenService.create(
-          {
-            session,
-            token_hash: refreshTokenGenerated,
-            expires_at: refreshTokenExpiresAt,
-          },
-          transactionalManager,
-        );
+        await transactionalManager.save(RefreshTokenEntity, {
+          session,
+          token_hash: refreshTokenGenerated,
+          expires_at: refreshTokenExpiresAt,
+        });
 
         return {
           accessToken: generateAccessToken({ sub }),
