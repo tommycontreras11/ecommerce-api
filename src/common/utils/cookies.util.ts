@@ -10,7 +10,7 @@ const cookieOptions: CookieOptions = {
 
 export const setTokenCookie = (
   res: Response,
-  tokenName: string,
+  tokenName: "access_token" | "refresh_token",
   value: string,
 ): void => {
   res.cookie(tokenName, value, cookieOptions);
