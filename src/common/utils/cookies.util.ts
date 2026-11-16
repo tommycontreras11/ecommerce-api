@@ -10,14 +10,14 @@ const cookieOptions: CookieOptions = {
 
 export const setTokenCookie = (
   res: Response,
-  token: string,
-  env: string,
+  tokenName: string,
+  value: string,
 ): void => {
-  res.cookie(token, env, cookieOptions);
+  res.cookie(tokenName, value, cookieOptions);
 };
 
-export const clearTokenCookie = (res: Response, env: string): void => {
-  res.clearCookie(env, {
+export const clearTokenCookie = (res: Response, tokenName: string): void => {
+  res.clearCookie(tokenName, {
     httpOnly: true,
     secure: cookieOptions.secure,
     sameSite: cookieOptions.sameSite,
