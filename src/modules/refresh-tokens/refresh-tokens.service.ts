@@ -5,7 +5,6 @@ import {
 import AppDataSource from "../../config/database.js";
 import { env } from "../../config/env.js";
 import { RefreshTokenEntity } from "../../database/entities/refresh-token.entity.js";
-import { SessionEntity } from "../../database/entities/session.entity.js";
 
 export const refreshTokenService = {
   async refresh(refreshTokenFound: RefreshTokenEntity) {
@@ -28,12 +27,6 @@ export const refreshTokenService = {
             expiresAt: refreshTokenExpiresAt,
           },
         },
-      );
-
-      await transactionalManager.update(
-        SessionEntity,
-        { uuid: refreshTokenFound.session.uuid },
-        { revoked_at: today },
       );
 
       await transactionalManager.update(
