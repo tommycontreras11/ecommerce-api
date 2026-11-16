@@ -1,6 +1,9 @@
 import { Request, Response } from "express";
 import { StatusCode } from "../../common/constants/status-code.enum.js";
-import { setTokenCookie } from "../../common/utils/cookies.util.js";
+import {
+  clearTokenCookie,
+  setTokenCookie,
+} from "../../common/utils/cookies.util.js";
 import { authService } from "./auth.service.js";
 
 export const signInController = async (req: Request, res: Response) => {
@@ -27,7 +30,10 @@ export const refreshController = async (req: Request, res: Response) => {
       .status(StatusCode.UNAUTHORIZED)
       .json({ error: { message: "Refresh token is required" } });
 
+  clearTokenCookie(res, "refresh_token");
   const auth = await authService.refresh(refreshToken);
+
+  setTokenCookie(res, "refresh_token", auth.refresh_token);
 
   return res.status(StatusCode.OK).json({ data: auth });
 };

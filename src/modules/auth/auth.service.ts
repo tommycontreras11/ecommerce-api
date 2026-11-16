@@ -5,7 +5,8 @@ import {
 import { comparePassword } from "../../common/utils/password.util.js";
 import AppDataSource from "../../config/database.js";
 import { env } from "../../config/env.js";
-import { ConflictException } from "../../exceptions/conflict.exception.js";
+import { RefreshTokenEntity } from "../../database/entities/refresh-token.entity.js";
+import { SessionEntity } from "../../database/entities/session.entity.js";
 import { NotFoundException } from "../../exceptions/not-found.exception.js";
 import { UnauthorizedException } from "../../exceptions/unauthorized.exception.js";
 import { meFormatted } from "../../mappers/auth.mapper.js";
@@ -36,7 +37,7 @@ export const authService = {
     await AppDataSource.manager.transaction(async (transactionalManager) => {
       const refreshTokenExpiresAt = new Date();
 
-      refreshTokenExpiresAt.setDate((new Date()).getDate() + 7);
+      refreshTokenExpiresAt.setDate(new Date().getDate() + 7);
 
       await saveAccessAndRefreshTokens(transactionalManager, {
         user: foundUserByEmail,
@@ -63,16 +64,36 @@ export const authService = {
       await refreshTokenRepository.findOneByToken(token_hash);
 
     if (!refreshToken)
-      throw new NotFoundException("Refresh token not found");
+      throw new UnauthorizedException("Refresh token not found");
+
+    if (
+      refreshToken.revoked_at &&
+      refreshToken.replaced_by_token_id
+    ) {
+      await AppDataSource.manager.transaction(async (transactionalManager) => {
+        const today = new Date();
+
+        await transactionalManager.update(
+          SessionEntity,
+          { uuid: refreshToken.session.uuid },
+          { revoked_at: today },
+        );
+
+        await transactionalManager.update(
+          RefreshTokenEntity,
+          { session_id: refreshToken.session.id },
+          { revoked_at: today },
+        );
+      });
+
+      throw new UnauthorizedException("Refresh token was already revoked");
+    }
 
     const isRefreshTokenExpired =
       new Date().getTime() > refreshToken.expires_at.getTime();
 
     if (isRefreshTokenExpired)
       throw new NotFoundException("Refresh token is expired");
-
-    if (refreshToken.revoked_at)
-      throw new ConflictException("Refresh token was already revoked");
 
     return await refreshTokenService.refresh(refreshToken);
   },
