@@ -24,11 +24,13 @@ export const saveAccessAndRefreshTokens = async (
     user_agent: payload?.token?.userAgent,
   });
 
-  await transactionalManager.save(RefreshTokenEntity, {
+  const refreshToken = await transactionalManager.save(RefreshTokenEntity, {
     session,
     token_hash: payload.refreshToken.token,
     expires_at: payload.refreshToken.expiresAt,
   });
+
+  return { session, refreshToken }
 };
 
 interface IToken {

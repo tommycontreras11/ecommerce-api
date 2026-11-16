@@ -7,9 +7,15 @@ const entity = AppDataSource.getRepository(RefreshTokenEntity);
 
 export const refreshTokenRepository = {
   findOneByToken(token: string): Promise<RefreshTokenEntity | null> {
-    return entity.findOneBy({ token_hash: token });
+    return entity.findOne({
+      relations: { session: { user: true } },
+      where: { token_hash: token },
+    });
   },
-  modify(payload: IUpdateRefreshToken, transactionalManager: EntityManager = AppDataSource.manager) {
-    return transactionalManager.save(RefreshTokenEntity, payload)
-  }
+  modify(
+    payload: IUpdateRefreshToken,
+    transactionalManager: EntityManager = AppDataSource.manager,
+  ) {
+    return transactionalManager.save(RefreshTokenEntity, payload);
+  },
 };

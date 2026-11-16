@@ -1,10 +1,15 @@
-import { generateAccessAndRefreshTokens, saveAccessAndRefreshTokens } from "../../common/utils/auth.util.js";
+import {
+  generateAccessAndRefreshTokens,
+  saveAccessAndRefreshTokens,
+} from "../../common/utils/auth.util.js";
 import { comparePassword } from "../../common/utils/password.util.js";
 import AppDataSource from "../../config/database.js";
 import { env } from "../../config/env.js";
+import { ConflictException } from "../../exceptions/conflict.exception.js";
 import { NotFoundException } from "../../exceptions/not-found.exception.js";
 import { UnauthorizedException } from "../../exceptions/unauthorized.exception.js";
 import { meFormatted } from "../../mappers/auth.mapper.js";
+import { refreshTokenRepository } from "../refresh-tokens/refresh-tokens.repository.js";
 import { refreshTokenService } from "../refresh-tokens/refresh-tokens.service.js";
 import { userRepository } from "../users/users.repository.js";
 import { IMe } from "./auth.types.js";
@@ -27,24 +32,24 @@ export const authService = {
 
     const { accessToken, refreshToken } =
       await generateAccessAndRefreshTokens(foundUserByEmail);
-    
+
     await AppDataSource.manager.transaction(async (transactionalManager) => {
       const refreshTokenExpiresAt = new Date();
 
-      refreshTokenExpiresAt.setDate(7);
+      refreshTokenExpiresAt.setDate((new Date()).getDate() + 7);
 
       await saveAccessAndRefreshTokens(transactionalManager, {
         user: foundUserByEmail,
         token: {
           ipAddress: payload.ipAddress,
-          userAgent: payload.userAgent
+          userAgent: payload.userAgent,
         },
         refreshToken: {
           token: refreshToken,
-          expiresAt: refreshTokenExpiresAt
-        }
-      })
-    })
+          expiresAt: refreshTokenExpiresAt,
+        },
+      });
+    });
 
     return {
       access_token: accessToken,
@@ -54,7 +59,22 @@ export const authService = {
     };
   },
   async refresh(token_hash: string) {
-    return await refreshTokenService.refresh(token_hash)
+    const refreshToken =
+      await refreshTokenRepository.findOneByToken(token_hash);
+
+    if (!refreshToken)
+      throw new NotFoundException("Refresh token not found");
+
+    const isRefreshTokenExpired =
+      new Date().getTime() > refreshToken.expires_at.getTime();
+
+    if (isRefreshTokenExpired)
+      throw new NotFoundException("Refresh token is expired");
+
+    if (refreshToken.revoked_at)
+      throw new ConflictException("Refresh token was already revoked");
+
+    return await refreshTokenService.refresh(refreshToken);
   },
   async me(user_uuid: string): Promise<IMe> {
     const user = await userRepository.findOneByUuid(user_uuid);

@@ -1,8 +1,7 @@
 import { Request, Response } from "express";
 import { StatusCode } from "../../common/constants/status-code.enum.js";
-import { authService } from "./auth.service.js";
 import { setTokenCookie } from "../../common/utils/cookies.util.js";
-import { env } from "../../config/env.js";
+import { authService } from "./auth.service.js";
 
 export const signInController = async (req: Request, res: Response) => {
   const ipAddress = req.ip;
@@ -14,7 +13,7 @@ export const signInController = async (req: Request, res: Response) => {
     userAgent,
   });
 
-  // setTokenCookie(res, "access_token", env.JWT_ACCESS_TOKEN);
+  setTokenCookie(res, "access_token", auth.access_token);
   setTokenCookie(res, "refresh_token", auth.refresh_token);
 
   return res.status(StatusCode.OK).json({ data: auth });
@@ -28,7 +27,7 @@ export const refreshController = async (req: Request, res: Response) => {
       .status(StatusCode.UNAUTHORIZED)
       .json({ error: { message: "Refresh token is required" } });
 
-  const auth = authService.refresh(refreshToken);
+  const auth = await authService.refresh(refreshToken);
 
   return res.status(StatusCode.OK).json({ data: auth });
 };
