@@ -1,43 +1,44 @@
+import { EntityManager, IsNull } from "typeorm";
 import {
   generateAccessAndRefreshTokens,
   saveAccessAndRefreshTokens,
 } from "../../common/utils/auth.util.js";
-import AppDataSource from "../../config/database.js";
 import { env } from "../../config/env.js";
 import { RefreshTokenEntity } from "../../database/entities/refresh-token.entity.js";
 
 export const refreshTokenService = {
-  async refresh(refreshTokenFound: RefreshTokenEntity) {
+  async rotate(
+    refreshTokenFound: RefreshTokenEntity,
+    transactionalManager: EntityManager,
+  ) {
     const { accessToken, refreshToken } = await generateAccessAndRefreshTokens(
       refreshTokenFound.session.user,
     );
 
-    await AppDataSource.manager.transaction(async (transactionalManager) => {
-      const today = new Date()
-      const refreshTokenExpiresAt = new Date();
+    const today = new Date();
+    const refreshTokenExpiresAt = new Date();
 
-      refreshTokenExpiresAt.setDate(refreshTokenExpiresAt.getDate() + 7);
+    refreshTokenExpiresAt.setDate(refreshTokenExpiresAt.getDate() + 7);
 
-      const refreshTokenSaved = await saveAccessAndRefreshTokens(
-        transactionalManager,
-        {
-          user: refreshTokenFound.session.user,
-          refreshToken: {
-            token: refreshToken,
-            expiresAt: refreshTokenExpiresAt,
-          },
+    const refreshTokenSaved = await saveAccessAndRefreshTokens(
+      transactionalManager,
+      {
+        user: refreshTokenFound.session.user,
+        refreshToken: {
+          token: refreshToken,
+          expiresAt: refreshTokenExpiresAt,
         },
-      );
+      },
+    );
 
-      await transactionalManager.update(
-        RefreshTokenEntity,
-        { uuid: refreshTokenFound.uuid },
-        {
-          replaced_by_token_id: refreshTokenSaved.refreshToken.id,
-          revoked_at: today,
-        },
-      );
-    });
+    await transactionalManager.update(
+      RefreshTokenEntity,
+      { uuid: refreshTokenFound.uuid, revoked_at: IsNull() },
+      {
+        replaced_by_token_id: refreshTokenSaved.refreshToken.id,
+        revoked_at: today,
+      },
+    );
 
     return {
       access_token: accessToken,
