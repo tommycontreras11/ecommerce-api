@@ -5,6 +5,7 @@ import {
 } from "../../common/utils/auth.util.js";
 import { env } from "../../config/env.js";
 import { RefreshTokenEntity } from "../../database/entities/refresh-token.entity.js";
+import { UnauthorizedException } from "../../exceptions/unauthorized.exception.js";
 
 export const refreshTokenService = {
   async rotate(
@@ -15,7 +16,6 @@ export const refreshTokenService = {
       refreshTokenFound.session.user,
     );
 
-    const today = new Date();
     const refreshTokenExpiresAt = new Date();
 
     refreshTokenExpiresAt.setDate(refreshTokenExpiresAt.getDate() + 7);
@@ -31,14 +31,17 @@ export const refreshTokenService = {
       },
     );
 
-    await transactionalManager.update(
+    const refreshTokenRevoked = await transactionalManager.update(
       RefreshTokenEntity,
       { uuid: refreshTokenFound.uuid, revoked_at: IsNull() },
       {
         replaced_by_token_id: refreshTokenSaved.refreshToken.id,
-        revoked_at: today,
+        revoked_at: new Date(),
       },
     );
+
+    if (refreshTokenRevoked.affected == 0)
+      throw new UnauthorizedException("Refresh token is no longer valid");
 
     return {
       access_token: accessToken,
