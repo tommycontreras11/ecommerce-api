@@ -9,15 +9,18 @@ import { RefreshTokenEntity } from "../../database/entities/refresh-token.entity
 import { SessionEntity } from "../../database/entities/session.entity.js";
 import { NotFoundException } from "../../exceptions/not-found.exception.js";
 import { UnauthorizedException } from "../../exceptions/unauthorized.exception.js";
-import { meFormatted } from "../../mappers/auth.mapper.js";
+import { meFormatted, tokensInfoFormatted } from "../../mappers/auth.mapper.js";
 import { refreshTokenRepository } from "../refresh-tokens/refresh-tokens.repository.js";
 import { refreshTokenService } from "../refresh-tokens/refresh-tokens.service.js";
+import { sessionRepository } from "../sessions/sessions.repository.js";
 import { userRepository } from "../users/users.repository.js";
-import { IMe } from "./auth.types.js";
+import { IMe, ITokensInfo } from "./auth.types.js";
 import { SignIn } from "./auth.validation.js";
 
 export const authService = {
-  async signIn(payload: SignIn & { ipAddress: string; userAgent: string }) {
+  async signIn(
+    payload: SignIn & { ipAddress: string; userAgent: string },
+  ): Promise<ITokensInfo> {
     const foundUserByEmail = await userRepository.findOneByEmail(payload.email);
 
     if (!foundUserByEmail)
@@ -52,14 +55,31 @@ export const authService = {
       });
     });
 
-    return {
+    return tokensInfoFormatted({
       access_token: accessToken,
       refresh_token: refreshToken,
       token_type: "Bearer",
       expires_in: env.JWT_EXPIRATION_TOKEN,
-    };
+    });
   },
-  async refresh(token_hash: string) {
+  async signOut(accessToken: string) {
+    await AppDataSource.manager.transaction(async (transactionalManager) => {
+      const sessionFound = await sessionRepository.findOneByUuid(accessToken);
+
+      await transactionalManager.update(
+        SessionEntity,
+        { uuid: sessionFound!.uuid },
+        { revoked_at: new Date() },
+      );
+
+      const refreshTokensRevoked = await transactionalManager.update(
+        RefreshTokenEntity,
+        { session: { uuid: sessionFound!.uuid } },
+        { revoked_at: new Date() },
+      );
+    });
+  },
+  async refresh(token_hash: string): Promise<ITokensInfo> {
     let isRefreshTokenReuseDetected = false;
     const result = await AppDataSource.manager.transaction(
       async (transactionalManager) => {

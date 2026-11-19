@@ -16,7 +16,7 @@ export const signInController = async (req: Request, res: Response) => {
     userAgent,
   });
 
-  setTokenCookie(res, "access_token", auth.access_token);
+  setTokenCookie(res, "access_token", `Bearer ${auth.access_token}`);
   setTokenCookie(res, "refresh_token", auth.refresh_token);
 
   return res.status(StatusCode.OK).json({ data: auth });
@@ -38,8 +38,11 @@ export const refreshController = async (req: Request, res: Response) => {
   return res.status(StatusCode.OK).json({ data: auth });
 };
 
-export const signOut = async (req: Request, res: Response) => {
+export const signOutController = async (req: Request, res: Response) => {
   req.user = null;
+
+  clearTokenCookie(res, "access_token");
+  clearTokenCookie(res, "refresh_token");
 
   return res
     .status(StatusCode.OK)

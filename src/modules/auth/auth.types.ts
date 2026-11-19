@@ -20,3 +20,10 @@ interface IPermission {
   resource: string;
   action: string;
 }
+
+export interface ITokensInfo {
+  access_token: string,
+  refresh_token: string,
+  token_type: "Bearer",
+  expires_in: string,
+}

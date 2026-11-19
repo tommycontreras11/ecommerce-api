@@ -1,5 +1,5 @@
 import { UserEntity } from "../database/entities/user.entity.js";
-import { IMe } from "../modules/auth/auth.types.js";
+import { IMe, ITokensInfo } from "../modules/auth/auth.types.js";
 
 export const meFormatted = (user: UserEntity): IMe => {
   return {
@@ -21,5 +21,14 @@ export const meFormatted = (user: UserEntity): IMe => {
         }),
       ),
     })),
+  };
+};
+
+export const tokensInfoFormatted = (payload: ITokensInfo): ITokensInfo => {
+  return {
+    access_token: payload.access_token,
+    refresh_token: payload.refresh_token,
+    token_type: payload.token_type,
+    expires_in: payload.expires_in,
   };
 };
