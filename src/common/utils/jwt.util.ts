@@ -1,8 +1,10 @@
 import jwt from "jsonwebtoken";
 import { env } from "../../config/env.js";
+import { UnauthorizedException } from "../../exceptions/unauthorized.exception.js";
 
 interface IJwtPayload {
   sub: string;
+  jti: string
 }
 
 export const generateAccessToken = (payload: IJwtPayload): string => {
@@ -19,8 +21,14 @@ export const generateRefreshAccessToken = (payload: IJwtPayload): string => {
   });
 };
 
-export const verifyAccessToken = (token: string): string | jwt.JwtPayload => {
-  return jwt.verify(token, env.JWT_ACCESS_TOKEN, { algorithms: ["HS256"] });
+export const verifyAccessToken = (token: string): jwt.JwtPayload => {
+  const payload = jwt.verify(token, env.JWT_ACCESS_TOKEN, { algorithms: ["HS256"] })
+
+  if (!payload || typeof payload.sub !== "string") {
+    throw new UnauthorizedException("Invalid access token");
+  }
+
+  return payload as jwt.JwtPayload;
 };
 
 export const verifyRefreshAccessToken = (
