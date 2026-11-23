@@ -25,16 +25,6 @@ export async function validateAuthentication(
         .status(StatusCode.UNAUTHORIZED)
         .json({ error: { message: "Invalid authorization header" } });
 
-    if (blackListedTokens.has(token))
-      return res
-        .status(StatusCode.UNAUTHORIZED)
-        .json({ error: { message: "Invalid or expired token" } });
-
-    if (req.url == "/sign-out") {
-      console.log(`Token added: ${token}}`)
-      if (!blackListedTokens.has(token)) blackListedTokens.add(token);
-    }
-
     let payload;
     try {
       payload = verifyAccessToken(token);
@@ -42,6 +32,16 @@ export async function validateAuthentication(
       return res
         .status(StatusCode.UNAUTHORIZED)
         .json({ error: { message: "Invalid or expired token" } });
+    }
+
+    if (blackListedTokens.has(payload.jti as string))
+      return res
+        .status(StatusCode.UNAUTHORIZED)
+        .json({ error: { message: "Invalid or expired token" } });
+
+    if (req.url == "/sign-out") {
+      if (!blackListedTokens.has(payload.jti as string))
+        blackListedTokens.add(payload.jti as string);
     }
 
     if (typeof payload.sub !== "string")

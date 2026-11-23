@@ -1,3 +1,4 @@
+import { IsNull } from "typeorm";
 import {
   generateAccessAndRefreshTokens,
   saveAccessAndRefreshTokens,
@@ -12,7 +13,6 @@ import { UnauthorizedException } from "../../exceptions/unauthorized.exception.j
 import { meFormatted, tokensInfoFormatted } from "../../mappers/auth.mapper.js";
 import { refreshTokenRepository } from "../refresh-tokens/refresh-tokens.repository.js";
 import { refreshTokenService } from "../refresh-tokens/refresh-tokens.service.js";
-import { sessionRepository } from "../sessions/sessions.repository.js";
 import { userRepository } from "../users/users.repository.js";
 import { IMe, ITokensInfo } from "./auth.types.js";
 import { SignIn } from "./auth.validation.js";
@@ -62,19 +62,28 @@ export const authService = {
       expires_in: env.JWT_EXPIRATION_TOKEN,
     });
   },
-  async signOut(accessToken: string) {
+  async signOut(refreshToken: string) {
     await AppDataSource.manager.transaction(async (transactionalManager) => {
-      const sessionFound = await sessionRepository.findOneByUuid(accessToken);
+      const refreshTokenFound = await refreshTokenRepository.findCurrent(
+        refreshToken,
+        transactionalManager,
+      );
+
+      if (!refreshTokenFound)
+        throw new UnauthorizedException("Refresh token not found");
 
       await transactionalManager.update(
         SessionEntity,
-        { uuid: sessionFound!.uuid },
+        { uuid: refreshTokenFound.session.uuid },
         { revoked_at: new Date() },
       );
 
-      const refreshTokensRevoked = await transactionalManager.update(
+      await transactionalManager.update(
         RefreshTokenEntity,
-        { session: { uuid: sessionFound!.uuid } },
+        {
+          session: { uuid: refreshTokenFound.session.uuid },
+          revoked_at: IsNull(),
+        },
         { revoked_at: new Date() },
       );
     });

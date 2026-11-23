@@ -7,9 +7,13 @@ import { generateAccessToken, generateRefreshAccessToken } from "./jwt.util.js";
 
 export const generateAccessAndRefreshTokens = async (user: UserEntity) => {
   return {
-    accessToken: generateAccessToken({ sub: user.uuid }),
+    accessToken: generateAccessToken({
+      sub: user.uuid,
+      jti: crypto.randomUUID(),
+    }),
     refreshToken: generateRefreshAccessToken({
       sub: user.uuid,
+      jti: crypto.randomUUID(),
     }),
   };
 };
@@ -30,7 +34,7 @@ export const saveAccessAndRefreshTokens = async (
     expires_at: payload.refreshToken.expiresAt,
   });
 
-  return { session, refreshToken }
+  return { session, refreshToken };
 };
 
 interface IToken {
