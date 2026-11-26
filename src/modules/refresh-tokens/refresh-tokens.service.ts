@@ -1,8 +1,11 @@
 import { EntityManager, IsNull } from "typeorm";
 import {
-  generateAccessAndRefreshTokens,
-  saveAccessAndRefreshTokens,
+  saveAccessAndRefreshTokens
 } from "../../common/utils/auth.util.js";
+import {
+  generateAccessToken,
+  generateRefreshToken,
+} from "../../common/utils/jwt.util.js";
 import { env } from "../../config/env.js";
 import { RefreshTokenEntity } from "../../database/entities/refresh-token.entity.js";
 import { UnauthorizedException } from "../../exceptions/unauthorized.exception.js";
@@ -14,9 +17,17 @@ export const refreshTokenService = {
     refreshTokenFound: RefreshTokenEntity,
     transactionalManager: EntityManager,
   ): Promise<ITokensInfo> {
-    const { accessToken, refreshToken } = await generateAccessAndRefreshTokens(
-      refreshTokenFound.session.user,
-    );
+    const accessTokenGenerated = generateAccessToken({
+      sub: refreshTokenFound.session.user.uuid,
+      jti: crypto.randomUUID(),
+      sid: refreshTokenFound.session.uuid,
+    });
+
+    const refreshTokenGenerated = generateRefreshToken({
+      sub: refreshTokenFound.session.user.uuid,
+      jti: crypto.randomUUID(),
+      sid: refreshTokenFound.session.uuid,
+    });
 
     const refreshTokenExpiresAt = new Date();
 
@@ -27,7 +38,7 @@ export const refreshTokenService = {
       {
         user: refreshTokenFound.session.user,
         refreshToken: {
-          token: refreshToken,
+          token: refreshTokenGenerated,
           expiresAt: refreshTokenExpiresAt,
         },
       },
@@ -46,8 +57,8 @@ export const refreshTokenService = {
       throw new UnauthorizedException("Refresh token is no longer valid");
 
     return tokensInfoFormatted({
-      access_token: accessToken,
-      refresh_token: refreshToken,
+      access_token: accessTokenGenerated,
+      refresh_token: refreshTokenGenerated,
       token_type: "Bearer",
       expires_in: env.JWT_EXPIRATION_TOKEN,
     });
