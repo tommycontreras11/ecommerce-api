@@ -5,6 +5,8 @@ import {
   setTokenCookie,
 } from "../../common/utils/cookies.util.js";
 import { authService } from "./auth.service.js";
+import { redisClient } from "../../config/redis.js";
+import { verifyAccessToken } from "../../common/utils/jwt.util.js";
 
 export const signInController = async (req: Request, res: Response) => {
   const ipAddress = req.ip;
@@ -16,7 +18,7 @@ export const signInController = async (req: Request, res: Response) => {
     userAgent,
   });
 
-  setTokenCookie(res, "access_token", `Bearer ${auth.access_token}`);
+  setTokenCookie(res, "access_token", auth.access_token);
   setTokenCookie(res, "refresh_token", auth.refresh_token);
 
   return res.status(StatusCode.OK).json({ data: auth });
@@ -39,7 +41,26 @@ export const refreshController = async (req: Request, res: Response) => {
 };
 
 export const signOutController = async (req: Request, res: Response) => {
+  const authorization = req.headers.authorization;
+  let token: string | undefined;
+
+  if (authorization) {
+    const [, value] = authorization?.split(" ");
+
+    token = value;
+  } else {
+    token = req.cookies.access_token;
+  }
+
+  const payload = verifyAccessToken(token!);
+
+  const jti = payload.jti as string;
+  const cacheKey = `black-listed-token:${jti}`;
+  await redisClient.set(cacheKey, JSON.stringify(payload));
+
   req.user = null;
+
+  await authService.signOut(req.cookies.refresh_token)
 
   clearTokenCookie(res, "access_token");
   clearTokenCookie(res, "refresh_token");

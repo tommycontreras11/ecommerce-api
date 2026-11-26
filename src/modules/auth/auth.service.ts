@@ -1,9 +1,9 @@
 import { IsNull } from "typeorm";
 import {
-  generateAccessAndRefreshTokens,
-  saveAccessAndRefreshTokens,
-} from "../../common/utils/auth.util.js";
-import { comparePassword } from "../../common/utils/password.util.js";
+  generateAccessToken,
+  generateRefreshToken,
+} from "../../common/utils/jwt.util.js";
+import { compareData, hashData } from "../../common/utils/string.util.js";
 import AppDataSource from "../../config/database.js";
 import { env } from "../../config/env.js";
 import { RefreshTokenEntity } from "../../database/entities/refresh-token.entity.js";
@@ -26,7 +26,7 @@ export const authService = {
     if (!foundUserByEmail)
       throw new UnauthorizedException("User y/o password incorrect");
 
-    const comparePasswords = await comparePassword(
+    const comparePasswords = await compareData(
       payload.password,
       foundUserByEmail.password_hash,
     );
@@ -34,30 +34,43 @@ export const authService = {
     if (!comparePasswords)
       throw new UnauthorizedException("User y/o password incorrect");
 
-    const { accessToken, refreshToken } =
-      await generateAccessAndRefreshTokens(foundUserByEmail);
+    let accessTokenGenerated = "",
+      refreshTokenGenerated = "";
 
     await AppDataSource.manager.transaction(async (transactionalManager) => {
       const refreshTokenExpiresAt = new Date();
+      refreshTokenExpiresAt.setDate(refreshTokenExpiresAt.getDate() + 7);
 
-      refreshTokenExpiresAt.setDate(new Date().getDate() + 7);
-
-      await saveAccessAndRefreshTokens(transactionalManager, {
+      const session = await transactionalManager.save(SessionEntity, {
         user: foundUserByEmail,
-        token: {
-          ipAddress: payload.ipAddress,
-          userAgent: payload.userAgent,
-        },
-        refreshToken: {
-          token: refreshToken,
-          expiresAt: refreshTokenExpiresAt,
-        },
+        ip_address: payload?.ipAddress,
+        user_agent: payload?.userAgent,
+      });
+
+      accessTokenGenerated = generateAccessToken({
+        sub: foundUserByEmail.uuid,
+        jti: crypto.randomUUID(),
+        sid: session.uuid,
+      });
+
+      refreshTokenGenerated = generateRefreshToken({
+        sub: foundUserByEmail.uuid,
+        jti: crypto.randomUUID(),
+        sid: session.uuid,
+      });
+
+      const refreshTokenHashed = await hashData(refreshTokenGenerated)
+
+      await transactionalManager.save(RefreshTokenEntity, {
+        session,
+        token_hash: refreshTokenHashed,
+        expires_at: refreshTokenExpiresAt,
       });
     });
 
     return tokensInfoFormatted({
-      access_token: accessToken,
-      refresh_token: refreshToken,
+      access_token: accessTokenGenerated,
+      refresh_token: refreshTokenGenerated,
       token_type: "Bearer",
       expires_in: env.JWT_EXPIRATION_TOKEN,
     });
