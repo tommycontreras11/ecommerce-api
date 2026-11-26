@@ -4,6 +4,7 @@ import {
   JoinColumn,
   ManyToOne,
   PrimaryColumn,
+  type Relation,
 } from "typeorm";
 import { RoleEntity } from "./roles.entity.js";
 import { PermissionEntity } from "./permission.entity.js";
@@ -20,7 +21,7 @@ export class RolePermissionEntity {
     onDelete: "CASCADE",
   })
   @JoinColumn({ name: "role_id", referencedColumnName: "id" })
-  role: RoleEntity;
+  role: Relation<RoleEntity>;
 
   @ManyToOne(
     () => PermissionEntity,

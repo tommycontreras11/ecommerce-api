@@ -9,6 +9,7 @@ import {
   ManyToOne,
   OneToMany,
   PrimaryGeneratedColumn,
+  type Relation,
   UpdateDateColumn,
 } from "typeorm";
 import { UserEntity } from "./user.entity.js";
@@ -57,7 +58,7 @@ export class SessionEntity extends BaseEntity {
     onDelete: "CASCADE",
   })
   @JoinColumn({ name: "user_id", referencedColumnName: "id" })
-  user: UserEntity;
+  user: Relation<UserEntity>;
 
   @OneToMany(() => RefreshTokenEntity, (refreshToken) => refreshToken.session)
   refreshTokens: RefreshTokenEntity[];

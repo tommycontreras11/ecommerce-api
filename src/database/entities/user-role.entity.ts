@@ -4,6 +4,7 @@ import {
   JoinColumn,
   ManyToOne,
   PrimaryColumn,
+  type Relation,
 } from "typeorm";
 import { RoleEntity } from "./roles.entity.js";
 import { UserEntity } from "./user.entity.js";
@@ -26,7 +27,7 @@ export class UserRoleEntity {
     onDelete: "CASCADE",
   })
   @JoinColumn({ name: "role_id", referencedColumnName: "id" })
-  role: RoleEntity;
+  role: Relation<RoleEntity>;
 
   @CreateDateColumn({ type: "timestamptz" })
   created_at: Date;
