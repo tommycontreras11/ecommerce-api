@@ -1,4 +1,4 @@
-import { hashPassword } from "../../common/utils/password.util.js";
+import { hashData } from "../../common/utils/string.util.js";
 import AppDataSource from "../../config/database.js";
 import { RoleEntity } from "../../database/entities/roles.entity.js";
 import { ConflictException } from "../../exceptions/conflict.exception.js";
@@ -36,7 +36,7 @@ export const userService = {
 
     if (!foundRole) throw new NotFoundException("Role not found");
 
-    const hashedPassword = await hashPassword(payload.password);
+    const hashedPassword = await hashData(payload.password);
 
     const user = await AppDataSource.manager.transaction(
       async (transactionalManager) => {
@@ -78,7 +78,7 @@ export const userService = {
 
     const userUpdated = await userRepository.modify(user, {
       ...payload,
-      password: payload.password && (await hashPassword(payload.password)),
+      password: payload.password && (await hashData(payload.password)),
     });
 
     return userFormatted(userUpdated);
