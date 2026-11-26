@@ -19,7 +19,10 @@ const envSchema = z.object({
   //JWT Config
   JWT_ACCESS_TOKEN: z.string().min(1),
   JWT_REFRESH_ACCESS_TOKEN: z.string().min(1),
-  JWT_EXPIRATION_TOKEN: z.string().default("24h")
+  JWT_EXPIRATION_TOKEN: z.string().default("24h"),
+
+  //Redis
+  REDIS_URL: z.string().min(1)
 })
 
 export const env = envSchema.parse(process.env)
