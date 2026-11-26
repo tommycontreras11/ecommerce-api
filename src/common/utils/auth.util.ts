@@ -1,22 +1,8 @@
 import { EntityManager } from "typeorm";
 import AppDataSource from "../../config/database.js";
-import { SessionEntity } from "../../database/entities/session.entity.js";
 import { RefreshTokenEntity } from "../../database/entities/refresh-token.entity.js";
+import { SessionEntity } from "../../database/entities/session.entity.js";
 import { UserEntity } from "../../database/entities/user.entity.js";
-import { generateAccessToken, generateRefreshAccessToken } from "./jwt.util.js";
-
-export const generateAccessAndRefreshTokens = async (user: UserEntity) => {
-  return {
-    accessToken: generateAccessToken({
-      sub: user.uuid,
-      jti: crypto.randomUUID(),
-    }),
-    refreshToken: generateRefreshAccessToken({
-      sub: user.uuid,
-      jti: crypto.randomUUID(),
-    }),
-  };
-};
 
 export const saveAccessAndRefreshTokens = async (
   transactionalManager: EntityManager = AppDataSource.manager,
